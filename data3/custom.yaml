@@ -1,0 +1,9 @@
+
+train: C:\\Users\\dhc40\\vision\\23_ML\\yolov5\\data3\\images\\train\\
+val: C:\\Users\\dhc40\\vision\\23_ML\\yolov5\\data3\\images\\val\\
+test: C:\\Users\\dhc40\\vision\\23_ML\\yolov5\\data2\\images\\val\\
+#number of class
+nc: 2
+# Classes
+names: ['with_helmet', 'without_helmet']
+
