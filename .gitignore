@@ -3,14 +3,14 @@
 *.cache
 *.txt
 *.jpeg
-*.png
+# *.png
 *.bmp
 *.tif
 *.tiff
 *.heic
 *.JPG
 *.JPEG
-*.PNG
+# *.PNG
 *.BMP
 *.TIF
 *.TIFF
