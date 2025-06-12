@@ -1,15 +1,111 @@
-# 2023-1 기계학습 Team project
+# YOLOv5 & StrongSORT를 이용한 헬멧 미착용 전동킥보드 사용자 탐지
 
+## 📖 프로젝트 소개
 
-<img src="킥라니.png" width="800">
+[cite\_start]본 프로젝트는 공유 전동킥보드 사용자의 안전 문제, 특히 **헬멧 미착용** 문제를 해결하기 위해 시작되었습니다. [cite: 5, 8] [cite\_start]도로교통법상 헬멧 착용은 의무이지만, 잘 지켜지지 않는 경우가 많아 관련 사고가 증가하고 있습니다. [cite: 7, 8]
 
-## 3. Result
-- https://wandb.ai/dilab_ajou/train/reports/---Vmlldzo0NTUyOTAw
-- https://wandb.ai/dilab_ajou/train/reports/FINAL-REPORT--Vmlldzo0NTUyOTYz
+[cite\_start]이에 저희는 딥러닝 객체 탐지 모델인 **YOLOv5**와 객체 추적 알고리즘인 **StrongSORT**를 사용하여, 영상에서 헬멧을 착용하지 않은 전동킥보드 사용자를 실시간으로 탐지하고 추적하는 시스템을 개발했습니다. [cite: 9]
 
-## 4. Citation
-```bibtex
-@inproceedings{yolov5,
-    github = https://github.com/ultralytics/yolov5
-}
-```
+\<br\>
+
+## ✨ 주요 기능
+
+  * **헬멧 착용 여부 탐지**: 전동킥보드 탑승자의 헬멧 착용/미착용 상태를 분류합니다.
+  * **객체 추적**: 영상 내 다수의 탑승자를 개별적으로 식별하고 고유 ID를 할당하여 지속적으로 추적합니다.
+  * [cite\_start]**실시간 처리**: YOLOv5의 빠른 추론 속도를 활용하여 실시간 영상에 적용할 수 있는 기반을 마련했습니다. [cite: 53]
+
+\<br\>
+
+## 🛠️ 개발 과정
+
+### 1\. 데이터셋 구축
+
+  * [cite\_start]**데이터 수집**: Roboflow의 공개 데이터셋과 자체 수집한 이미지들을 활용했습니다. [cite: 22]
+  * [cite\_start]**데이터 라벨링**: 총 **7,983개**의 이미지에 대해 `LabelImg` 도구를 사용하여 '헬멧 착용 탑승자(with\_helmet)'와 '헬멧 미착용 탑승자(without\_helmet)' 두 가지 클래스로 바운딩 박스(Bounding box) 작업을 진행했습니다. [cite: 25, 27]
+  * [cite\_start]**데이터 구성**: 최종 데이터셋은 'with\_helmet' 54% (4,529개), 'without\_helmet' 46% (3,925개)의 비율로 구성하여 클래스 불균형 문제를 최소화했습니다. [cite: 30, 41]
+
+### 2\. 모델 학습 (YOLOv5)
+
+[cite\_start]YOLOv5는 빠른 속도와 높은 정확도, 쉬운 사용성 등 여러 장점을 고려하여 객체 탐지 모델로 선정했습니다. [cite: 48, 50, 52]
+
+  * [cite\_start]**학습 환경**: `batch_size=8`, `epochs=100`으로 설정하여 학습을 진행했습니다. [cite: 55]
+  * [cite\_start]**성능 평가**: 여러 실험 모델 중 데이터 균형을 잘 조정한 `yolo_road_det3` 모델이 가장 우수한 성능(mAP, recall, precision)을 보여 최종 모델로 채택했습니다. [cite: 74]
+  * [cite\_start]**학습 결과**: 학습이 진행됨에 따라 train/validation loss는 꾸준히 감소하고, mAP와 같은 성능 지표는 안정적으로 상승하여 모델이 효과적으로 학습되었음을 확인했습니다. [cite: 80, 87]
+      * **mAP@0.5**: 0.963
+      * **Precision**: 0.934
+      * **Recall**: 0.916
+
+### 3\. 객체 추적 (StrongSORT)
+
+[cite\_start]탐지된 객체를 영상 속에서 지속적으로 추적하기 위해 DeepSORT를 개선한 **StrongSORT** 알고리즘을 적용했습니다. [cite: 58, 59]
+
+  * [cite\_start]**성능 지표**: 다중 객체 추적 정확도인 \*\*MOTA(Multi-Object Tracking Accuracy)\*\*를 사용하여 추적 성능을 평가했습니다. [cite: 96]
+  * [cite\_start]**성능 분석**: MOTA 값은 촬영 환경에 따라 다르게 나타났습니다. [cite: 98]
+      * [cite\_start]**높은 성능**: 근거리, 단일 객체, 측면/정면 촬영 시 높은 추적 성능 (최대 0.95)을 보였습니다. [cite: 99]
+      * [cite\_start]**낮은 성능**: 원거리, 객체 겹침, 후면 촬영 시 탐지가 불안정해져 MOTA 값이 감소하는 경향을 보였습니다. [cite: 99, 100, 101]
+
+\<br\>
+
+## 🚀 시작하기
+
+### 사전 요구사항
+
+  * `Python 3.8+`
+  * `PyTorch 1.7+`
+  * 기타 라이브러리는 `requirements.txt` 참조
+
+### 설치
+
+1.  **저장소 복제**
+
+    ```bash
+    git clone https://github.com/dhcryan/yolov5.git
+    cd yolov5
+    ```
+
+2.  **필요 라이브러리 설치**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+### 실행
+
+1.  **학습된 가중치 파일 다운로드**
+
+      * 프로젝트에서 학습시킨 최종 가중치 파일(`best.pt`)을 다운로드하여 프로젝트 폴더에 위치시킵니다.
+      * StrongSORT 가중치 파일(`osnet_x0_25_msmt17.pt`)을 다운로드합니다.
+
+2.  **헬멧 미착용자 탐지 및 추적 실행**
+
+    ```bash
+    python track.py --yolo-weights best.pt --strong-sort-weights osnet_x0_25_msmt17.pt --source [비디오 파일 경로 또는 '0' for 웹캠]
+    ```
+
+\<br\>
+
+## ⛔ 한계점 및 향후 개선 과제
+
+  * [cite\_start]**탐지 성능**: 탑승자가 멀리 있거나 뒷모습만 보일 때, 여러 객체가 겹칠 때 탐지 정확도가 떨어지는 문제가 있습니다. [cite: 110]
+  * [cite\_start]**데이터셋**: 특정 상황(후면, 야간 등)에 대한 데이터가 부족하여 모델의 일반화 성능에 한계가 있습니다. [cite: 115] [cite\_start]이를 해결하기 위해 다양한 환경의 데이터를 추가 수집하고 데이터 증강(Data Augmentation) 기법을 적용할 필요가 있습니다. [cite: 118]
+  * [cite\_start]**모델 개선**: 최신 모델인 YOLOv8, YOLO-NAS 등을 도입하여 성능 향상을 기대할 수 있습니다. [cite: 121]
+  * [cite\_start]**프로토타입**: 향후 개선된 모델을 기반으로 카메라 센서와 경고음 발생 모듈을 결합하여 실시간 탐지 프로토타입을 구현할 계획입니다. [cite: 107, 122]
+
+\<br\>
+
+## 👨‍💻 팀원 (아주대학교 8조)
+
+| 이름   | 학번      |
+| ------ | --------- |
+| 김재현 | 201721631 |
+| 조재현 | 201820724 |
+| 허성철 | 201821070 |
+| 최동훈 | 201821505 |
+| 이승관 | 201921122 |
+
+\<br\>
+
+## 📚 참고 자료
+
+  * **YOLOv5**: [GitHub Repository](https://github.com/ultralytics/yolov5), [Documentation](https://docs.ultralytics.com/yolov5/)
+  * **StrongSORT**: [Paper](https://arxiv.org/abs/2202.13514), [GitHub Repository](https://github.com/dyhBUPT/StrongSORT)
